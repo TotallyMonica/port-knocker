@@ -3,6 +3,7 @@
 import socket
 from time import time
 import sys
+import os
 
 # Testing method
 def test(port, interface='0.0.0.0', timeout=60, verbose=False):
@@ -11,10 +12,14 @@ def test(port, interface='0.0.0.0', timeout=60, verbose=False):
 
     # Socket connection
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as srv:
-        srv.timeout(timeout)
+        srv.settimeout(timeout)
 
         # Bind and then listen, informing the user
-        srv.bind((interface, port))
+        try:
+            srv.bind((interface, port))
+        except OSError:
+            return False
+
         srv.listen()
 
         if verbose:
@@ -43,12 +48,16 @@ def loop(ports, interface='0.0.0.0', timeout=10, verbose=False, knownGood=None):
     results = []
     checkedPorts = []
 
-    for port in ports:
-        if port not in knownGood:
-            checkedPorts.append(port)
+    if knownGood:
+        for port in ports:
+            if port not in knownGood:
+                checkedPorts.append(port)
+    
+    else:
+        checkedPorts = ports
 
     for port in checkedPorts:
-        result = test(port, interface, timeout)
+        result = test(port, interface, timeout, verbose)
 
         # Warn if the port failed and the  
         if not result and verbose:
@@ -57,11 +66,12 @@ def loop(ports, interface='0.0.0.0', timeout=10, verbose=False, knownGood=None):
     
     return results
 
-# Configure the 
+# Configure the server to check ports
 def main():
     interface = '0.0.0.0'
     timeout = 10
     knownGood = None
+    verbose = True
 
     if '-i' in sys.argv or '--interface' in sys.argv:
         index = sys.argv.index('-i')
@@ -75,21 +85,35 @@ def main():
             print('Invalid input, ignoring timeout variable')
 
     if '-g' in sys.argv or '--known-good' in sys.argv:
+        knownGood = []
         index = sys.argv.index('-g')
-        val = sys.argv[index + 1]
-        if val.isdigit():
-            val = int(val)
-        else:
-            print('Invalid port provided, ignoring provided port')
-            print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
-        
-        if val < 65536 and val > 0:
-            knownGood = val
-        else:
-            print('Port is outside the valid port range (1-65535). Provided port will be ignored.')
-            print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
-    
-    results = loop(range(1, 65536), interface, timeout, knownGood)
+        val = sys.argv[index + 1].split(',')
+
+        # Validate it is a valid port
+        for port in val:
+            if port.isdigit():
+                port = int(port)
+            else:
+                print(f'Specified port {port} is invalid, ignoring the value.')
+                print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
+                val.remove(port)
+
+                break
+            
+            if port < 65536 and port > 0:
+                knownGood.append(port)
+            else:
+                print(f'Specified port {port} is outside the valid port range (1-65535). Provided port will be ignored.')
+                print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
+                val.remove(port)
+
+    if os.getuid() == 0:
+        portRange = range(1, 65536)
+    else:
+        portRange = range(1024, 65536)
+
+    results = loop(portRange, interface, timeout, verbose, knownGood)
+    print(results)
 
 if __name__ == '__main__':
     main()

@@ -21,5 +21,5 @@ python3 client.py -a address [-t timeout] [-g [known good ports]]
 ## To-Do
 
 - [ ] Create control panel
-- [ ] Don't scan known good ports
+- [X] ~~*Don't scan known good ports*~~ [2022-12-07]
 - [ ] Enable communication between the client and the server through a known good port.

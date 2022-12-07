@@ -4,6 +4,7 @@ import socket
 from time import time
 import sys
 import os
+import csv
 
 # Testing method
 def test(port, interface='0.0.0.0', timeout=60, verbose=False):
@@ -18,7 +19,7 @@ def test(port, interface='0.0.0.0', timeout=60, verbose=False):
         try:
             srv.bind((interface, port))
         except OSError:
-            return False
+            return "In use"
 
         srv.listen()
 
@@ -40,7 +41,7 @@ def test(port, interface='0.0.0.0', timeout=60, verbose=False):
         if test == data:
             return True
         
-        return False
+        return "Malformed"
     
 # Loop tests all the ports, handles the logging
 def loop(ports, interface='0.0.0.0', timeout=10, verbose=False, knownGood=None):
@@ -61,7 +62,14 @@ def loop(ports, interface='0.0.0.0', timeout=10, verbose=False, knownGood=None):
         # Warn if the port failed and the  
         if not result and verbose:
             print(f'Warning: Port {port} failed!')
-        results.append([port, result])
+        
+        if result == True:
+            results.append([port, "Pass"])
+        elif result == False:
+            results.append([port, "Fail"])
+        else:
+            results.append([port, result])
+        
     
     return results
 
@@ -112,6 +120,13 @@ def main():
         portRange = range(1024, 65536)
 
     results = loop(portRange, interface, timeout, verbose, knownGood)
+
+    with open('results.csv', 'w') as filp:
+        writer = csv.writer(filp, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow([port, 'result'])
+        for row in results:
+            writer.writerow(row)
+
     print(results)
 
 if __name__ == '__main__':

@@ -41,8 +41,13 @@ def test(port, interface='0.0.0.0', timeout=60, verbose=False):
 # Loop tests all the ports, handles the logging
 def loop(ports, interface='0.0.0.0', timeout=10, verbose=False, knownGood=None):
     results = []
+    checkedPorts = []
 
     for port in ports:
+        if port not in knownGood:
+            checkedPorts.append(port)
+
+    for port in checkedPorts:
         result = test(port, interface, timeout)
 
         # Warn if the port failed and the  
@@ -76,11 +81,13 @@ def main():
             val = int(val)
         else:
             print('Invalid port provided, ignoring provided port')
+            print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
         
         if val < 65536 and val > 0:
             knownGood = val
         else:
             print('Port is outside the valid port range (1-65535). Provided port will be ignored.')
+            print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
     
     results = loop(range(1, 65536), interface, timeout, knownGood)
 

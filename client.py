@@ -66,13 +66,13 @@ def main():
             val = int(val)
         else:
             print('Invalid port provided, ignoring provided port')
-            print('Valid usage: -g {Integer between 1 and 65535}')
+            print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
         
         if val < 65536 and val > 0:
             knownGood = val
         else:
             print('Port is outside the valid port range (1-65535). Provided port will be ignored.')
-            print('Valid usage: -g {Integer between 1 and 65535}')
+            print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
     
     results = loop(range(1, 65536), address, timeout, knownGood)
 

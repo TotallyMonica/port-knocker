@@ -32,7 +32,7 @@ def test(address, port, timeout=60, verbose=False):
             return False
         
         if verbose:
-            print(f'Received: {data}')
+            print(f'Connected to ({address}:{port})')
 
         client.close()
         return True

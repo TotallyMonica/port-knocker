@@ -1,30 +1,40 @@
 import socket
-from time import time
+import time
 import sys
 import os
 
 # Testing method that tests connectivity on each port
 def test(address, port, timeout=60, verbose=False):
-    # Set timeout
-    socket.timeout(timeout)
+    time.sleep(1)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
-        print(type(address))
-        print(type(port))
+        client.settimeout(timeout)
         # In a try/except case as the connection has a chance to fail
         # Accept the received data and send it back to the server to confirm validity.
         try:
+            if verbose:
+                print(f"Trying to connect to {address}:{port}...")
             client.connect((address, port))
         except ConnectionRefusedError:
+            client.close()
+            return False
+        except TimeoutError:
+            client.close()
             return False
     
         # In a try/except case as the connection has a chance to fail
         # Accept the received data and send it back to the server to confirm validity.
-        data = client.recv(2048).decode('utf-8')
-        client.send(data.encode('utf-8'))
+        try:
+            data = client.recv(2048).decode('utf-8')
+            client.send(data.encode('utf-8'))
+        except TimeoutError:
+            client.close()
+            return False
         
         if verbose:
             print(f'Received: {data}')
+
+        client.close()
         return True
 
 # Looping method to test every port
@@ -53,7 +63,7 @@ def loop(ports, address, timeout=10, verbose=False, knownGood=None):
     return results
 
 def main():
-    timeout = 10
+    timeout = 30
     knownGood = None
     verbose = True
     address = '45.33.10.75'

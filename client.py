@@ -29,8 +29,17 @@ def test(address, port, timeout=60, verbose=False):
 # Todo: Don't test known good ports
 def loop(ports, address, timeout=10, verbose=False, knownGood=None):
     results = []
+    checkedPorts = []
 
-    for port in ports:
+    if knownGood:
+        for port in ports:
+            if port not in knownGood:
+                checkedPorts.append(port)
+    
+    else:
+        checkedPorts = ports
+
+    for port in checkedPorts:
         result = test(port, address, timeout, verbose)
 
         # Warn if the port failed and verbosity is true

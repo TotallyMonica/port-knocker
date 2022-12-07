@@ -35,11 +35,10 @@ def test(port, interface='0.0.0.0', timeout=60, verbose=False):
             print(f"Connection from {addr}")
 
         # If there's a connection, confirm connectivity by sending the received data back.
-        if conn:
-            conn.send(data.encode('utf-8'))
-            test = data.recv(2048).decode('utf-8')
-            if test == data:
-                return True
+        conn.send(data.encode('utf-8'))
+        test = conn.recv(2048).decode('utf-8')
+        if test == data:
+            return True
         
         return False
     

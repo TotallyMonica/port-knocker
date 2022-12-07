@@ -9,6 +9,8 @@ def test(address, port, timeout=60, verbose=False):
     socket.timeout(timeout)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+        print(type(address))
+        print(type(port))
         # In a try/except case as the connection has a chance to fail
         # Accept the received data and send it back to the server to confirm validity.
         try:
@@ -22,7 +24,7 @@ def test(address, port, timeout=60, verbose=False):
         client.send(data.encode('utf-8'))
         
         if verbose:
-            print(f'Received: {data.decode("utf-8")}')
+            print(f'Received: {data}')
         return True
 
 # Looping method to test every port
@@ -40,7 +42,7 @@ def loop(ports, address, timeout=10, verbose=False, knownGood=None):
         checkedPorts = ports
 
     for port in checkedPorts:
-        result = test(port, address, timeout, verbose)
+        result = test(address, port, timeout, verbose)
 
         # Warn if the port failed and verbosity is true
         if not result and verbose:
@@ -54,14 +56,15 @@ def main():
     timeout = 10
     knownGood = None
     verbose = True
+    address = '45.33.10.75'
 
     # Address argument
-    if '-a' in sys.argv or '--address' in sys.argv:
-        index = sys.argv.index('-i')
-        address = sys.argv[index + 1]
-    else:
-        print('An address needs to be provided.')
-        print(f'Example: {sys.argv[0]} -a 192.168.144.120')
+    # if '-a' in sys.argv or '--address' in sys.argv:
+    #     index = sys.argv.index('-a')
+    #     address = sys.argv[index + 1]
+    # else:
+    #     print('An address needs to be provided.')
+    #     print(f'Example: {sys.argv[0]} -a 192.168.144.120')
 
     # Timeout argument
     if '-t' in sys.argv or '--timeout' in sys.argv:

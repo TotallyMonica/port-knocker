@@ -96,14 +96,14 @@ def beginThreading(startPort, endPort, address, timeout, verbose, knownGood):
     
     print(portRanges)
 
-    thread1 = threading.Thread(target=newThread, args=(output, 0, startPort, endPort, address, timeout, verbose, knownGood))
-    thread2 = threading.Thread(target=newThread, args=(output, 1, startPort, endPort, address, timeout, verbose, knownGood))
-    thread3 = threading.Thread(target=newThread, args=(output, 2, startPort, endPort, address, timeout, verbose, knownGood))
-    thread4 = threading.Thread(target=newThread, args=(output, 3, startPort, endPort, address, timeout, verbose, knownGood))
-    thread5 = threading.Thread(target=newThread, args=(output, 4, startPort, endPort, address, timeout, verbose, knownGood))
-    thread6 = threading.Thread(target=newThread, args=(output, 5, startPort, endPort, address, timeout, verbose, knownGood))
-    thread7 = threading.Thread(target=newThread, args=(output, 6, startPort, endPort, address, timeout, verbose, knownGood))
-    thread8 = threading.Thread(target=newThread, args=(output, 7, startPort, endPort, address, timeout, verbose, knownGood))
+    thread1 = threading.Thread(target=newThread, args=(output, 0, startPort[0][0], endPort[0][1], address, timeout, verbose, knownGood))
+    thread2 = threading.Thread(target=newThread, args=(output, 1, startPort[1][0], endPort[1][1], address, timeout, verbose, knownGood))
+    thread3 = threading.Thread(target=newThread, args=(output, 2, startPort[2][0], endPort[2][1], address, timeout, verbose, knownGood))
+    thread4 = threading.Thread(target=newThread, args=(output, 3, startPort[3][0], endPort[3][1], address, timeout, verbose, knownGood))
+    thread5 = threading.Thread(target=newThread, args=(output, 4, startPort[4][0], endPort[4][1], address, timeout, verbose, knownGood))
+    thread6 = threading.Thread(target=newThread, args=(output, 5, startPort[5][0], endPort[5][1], address, timeout, verbose, knownGood))
+    thread7 = threading.Thread(target=newThread, args=(output, 6, startPort[6][0], endPort[6][1], address, timeout, verbose, knownGood))
+    thread8 = threading.Thread(target=newThread, args=(output, 7, startPort[7][0], endPort[7][1], address, timeout, verbose, knownGood))
     
     thread1.start()
     thread2.start()

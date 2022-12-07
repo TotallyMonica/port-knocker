@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import socket
+import threading
 from time import time
 import sys
 import os
@@ -73,12 +74,65 @@ def loop(ports, interface='0.0.0.0', timeout=10, verbose=False, knownGood=None):
     
     return results
 
+# The stupid way I have to get the return value because I can't just do it natively
+def newThread(output, threadNum, startPort, endPort, address, timeout, verbose, knownGood):
+    output[threadNum] = loop(range(startPort, endPort), address, timeout, verbose, knownGood)
+
+# Begin threading, restricted to 8 threads as of right now
+# TODO: Clean this spaghetti code up
+def beginThreading(startPort, endPort, address, timeout, verbose, knownGood):
+    output = [None, None, None, None, None, None, None, None]
+    offset = (endPort - startPort) / 8
+    nextStartingPort = startPort
+
+    # Calculate the port ranges
+    portRanges = []
+    for i in range(8):
+        portRanges.append([
+                nextStartingPort,
+                nextStartingPort + offset
+            ])
+        nextStartingPort += offset
+    
+    print(portRanges)
+
+    thread1 = threading.Thread(target=newThread, args=(output, 0, startPort, endPort, address, timeout, verbose, knownGood))
+    thread2 = threading.Thread(target=newThread, args=(output, 1, startPort, endPort, address, timeout, verbose, knownGood))
+    thread3 = threading.Thread(target=newThread, args=(output, 2, startPort, endPort, address, timeout, verbose, knownGood))
+    thread4 = threading.Thread(target=newThread, args=(output, 3, startPort, endPort, address, timeout, verbose, knownGood))
+    thread5 = threading.Thread(target=newThread, args=(output, 4, startPort, endPort, address, timeout, verbose, knownGood))
+    thread6 = threading.Thread(target=newThread, args=(output, 5, startPort, endPort, address, timeout, verbose, knownGood))
+    thread7 = threading.Thread(target=newThread, args=(output, 6, startPort, endPort, address, timeout, verbose, knownGood))
+    thread8 = threading.Thread(target=newThread, args=(output, 7, startPort, endPort, address, timeout, verbose, knownGood))
+    
+    thread1.start()
+    thread2.start()
+    thread3.start()
+    thread4.start()
+    thread5.start()
+    thread6.start()
+    thread7.start()
+    thread8.start()
+
+    thread1.join()
+    thread2.join()
+    thread3.join()
+    thread4.join()
+    thread5.join()
+    thread6.join()
+    thread7.join()
+    thread8.join()
+
+    return output
+
 # Configure the server to check ports
 def main():
     interface = '0.0.0.0'
     timeout = 10
     knownGood = None
     verbose = True
+    startPort = 1
+    endPort = 65535
 
     if '-i' in sys.argv or '--interface' in sys.argv:
         index = sys.argv.index('-i')
@@ -114,12 +168,11 @@ def main():
                 print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
                 val.remove(port)
 
-    if os.getuid() == 0:
-        portRange = range(1, 65536)
-    else:
-        portRange = range(1024, 65536)
-
-    results = loop(portRange, interface, timeout, verbose, knownGood)
+    if os.getuid() != 0:
+        startPort = 1024
+    
+    results = beginThreading(startPort, endPort + 1, interface, timeout, verbose, knownGood)
+    print(results)
 
     with open('results.csv', 'w') as filp:
         writer = csv.writer(filp, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)

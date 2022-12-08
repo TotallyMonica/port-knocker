@@ -176,7 +176,7 @@ def main():
 
     with open('results.csv', 'w') as filp:
         writer = csv.writer(filp, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow([port, 'result'])
+        writer.writerow(['port', 'result'])
         for row in results:
             writer.writerow(row)
 

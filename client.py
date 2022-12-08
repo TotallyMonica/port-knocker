@@ -6,7 +6,7 @@ import threading
 
 # Testing method that tests connectivity on each port
 def test(address, port, timeout=60, verbose=False):
-    time.sleep(0.5)
+    time.sleep(1)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
         client.settimeout(timeout)

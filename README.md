@@ -6,6 +6,8 @@ I found that my college has a port based firewall that blocks services without a
 
 ## Usage
 
+The client needs to be "behind the firewall" and the server "outside the firewall". Be aware of any potentially blocked ports going into the server's network, and be prepared to ignore these as their status is indeterminate (you'll need to find another way to do this - recommendation is to find another place to run a server that isn't behind a port blocker). 
+
 Server:
 
 ```bash

@@ -7,6 +7,8 @@ import sys
 import os
 import csv
 
+__VERSION__ = '0.1.1'
+
 def test_udp(port, interface='0.0.0.0', timeout=60, verbose=False):
     data = f'Test to see if UDP traffic is working'
 
@@ -184,6 +186,15 @@ def main():
     startPort = 1
     endPort = 65535
     proto = PROTO_DEFAULT
+
+    if '-h' in sys.argv or '--help' in sys.argv:
+        print(f"Port knocker v{__VERSION__}")
+        print(f"\nUsage:")
+        print(f"\t-p, --protocol: specify the protocol used (Default: TCP)")
+        print(f"\t-i, --interface: specify the interface to use (Default: 0.0.0.0)")
+        print(f"\t-t, --timeout: specify the timeout period (default: 10 seconds)")
+        print(f"\t-g, --known-good: specify known good ports, comma delimited")
+        sys.exit(0)
 
     if '-p' in sys.argv or '--protocol' in sys.argv:
         try:

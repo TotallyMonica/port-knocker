@@ -19,29 +19,26 @@ def test_udp(port, interface='0.0.0.0', timeout=60, verbose=False):
             srv.bind((interface, port))
         except OSError:
             return "In use"
-    
-    srv.listen()
 
-    if verbose:
-        print(f"Waiting for a connection on {interface}:{port}...")
-    
-    try:
-        conn, addr = srv.accept()
-    except TimeoutError:
-        return False
+        if verbose:
+            print(f"Waiting for a connection on {interface}:{port}...")
+        
+        try:
+            # If there's a connection, confirm connectivity by sending the received data back.   
+            # This part is the part that emulates TCP  
+            msg, addr = srv.recvfrom(2048)
+            if verbose:
+                print(f"Connection from {addr}")
+            srv.send(msg, addr)
+            test = srv.recv(2048).decode('utf-8')
 
-    if verbose:
-        print(f"Connection from {addr}")
-
-    # If there's a connection, confirm connectivity by sending the received data back.
-    conn.send(data.encode('utf-8'))
-    test = conn.recv(2048)
-    conn.send(test)
-    test = conn.recv(2048).decode('utf-8')
-    if test == data:
-        return True
-    
-    return "Malformed"
+            # Ensure it matches the expected data
+            if test == data:
+                return True
+        except TimeoutError:
+            return False
+   
+        return "Malformed"
 
 # Testing method
 def test_tcp(port, interface='0.0.0.0', timeout=60, verbose=False):

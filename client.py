@@ -45,6 +45,7 @@ def test_udp(address, port, timeout=60, verbose=False):
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
         client.settimeout(timeout)
+        data = f'Test to see if UDP traffic is working'
         # In a try/except case as the connection has a chance to fail
         # Accept the received data and send it back to the server to confirm validity.
         try:
@@ -61,10 +62,9 @@ def test_udp(address, port, timeout=60, verbose=False):
         # In a try/except case as the connection has a chance to fail
         # Accept the received data and send it back to the server to confirm validity.
         try:
-            data = client.recv(2048)
-            client.send(data)
-            data = client.recv(2048)
-            client.send(data)
+            client.send(data.encode('utf-8'))
+            msg, address = client.recv(2048)
+            client.send(msg)
         except TimeoutError:
             client.close()
             return False

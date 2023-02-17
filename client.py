@@ -101,8 +101,8 @@ def loop(ports, address, timeout=10, verbose=False, knownGood=None):
     return results
 
 # The stupid way I have to get the return value because I can't just do it natively
-def newThread(output, threadNum, startPort, endPort, address, timeout, verbose, knownGood):
-    output[threadNum] = loop(range(startPort, endPort), address, timeout, verbose, knownGood)
+def newThread(output, threadNum, startPort, endPort, proto, address, timeout, verbose, knownGood):
+    output[threadNum] = loop(range(startPort, endPort), proto, address, timeout, verbose, knownGood)
 
 # Begin threading, restricted to 8 threads as of right now
 # TODO: Clean this spaghetti code up

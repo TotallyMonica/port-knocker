@@ -126,12 +126,12 @@ def loop(ports, interface='0.0.0.0', proto='tcp', timeout=10, verbose=False, kno
     return results
 
 # The stupid way I have to get the return value because I can't just do it natively
-def newThread(output, threadNum, startPort, endPort, address, protocol, timeout, verbose, knownGood):
-    output[threadNum] = loop(range(startPort, endPort), address, protocol, timeout, verbose, knownGood)
+def newThread(output, threadNum, startPort, endPort, address, proto, timeout, verbose, knownGood):
+    output[threadNum] = loop(range(startPort, endPort), address, proto, timeout, verbose, knownGood)
 
 # Begin threading, restricted to 8 threads as of right now
 # TODO: Clean this spaghetti code up
-def beginThreading(startPort, endPort, address, protocol, timeout, verbose, knownGood):
+def beginThreading(startPort, endPort, address, proto, timeout, verbose, knownGood):
     output = [None, None, None, None, None, None, None, None]
     offset = int( (endPort - startPort) / 8 )
     nextStartingPort = startPort
@@ -147,14 +147,14 @@ def beginThreading(startPort, endPort, address, protocol, timeout, verbose, know
     
     print(portRanges)
 
-    thread1 = threading.Thread(target=newThread, args=(output, 0, portRanges[0][0], portRanges[0][1], address, protocol, timeout, verbose, knownGood))
-    thread2 = threading.Thread(target=newThread, args=(output, 1, portRanges[1][0], portRanges[1][1], address, protocol, timeout, verbose, knownGood))
-    thread3 = threading.Thread(target=newThread, args=(output, 2, portRanges[2][0], portRanges[2][1], address, protocol, timeout, verbose, knownGood))
-    thread4 = threading.Thread(target=newThread, args=(output, 3, portRanges[3][0], portRanges[3][1], address, protocol, timeout, verbose, knownGood))
-    thread5 = threading.Thread(target=newThread, args=(output, 4, portRanges[4][0], portRanges[4][1], address, protocol, timeout, verbose, knownGood))
-    thread6 = threading.Thread(target=newThread, args=(output, 5, portRanges[5][0], portRanges[5][1], address, protocol, timeout, verbose, knownGood))
-    thread7 = threading.Thread(target=newThread, args=(output, 6, portRanges[6][0], portRanges[6][1], address, protocol, timeout, verbose, knownGood))
-    thread8 = threading.Thread(target=newThread, args=(output, 7, portRanges[7][0], portRanges[7][1], address, protocol, timeout, verbose, knownGood))
+    thread1 = threading.Thread(target=newThread, args=(output, 0, portRanges[0][0], portRanges[0][1], address, proto, timeout, verbose, knownGood))
+    thread2 = threading.Thread(target=newThread, args=(output, 1, portRanges[1][0], portRanges[1][1], address, proto, timeout, verbose, knownGood))
+    thread3 = threading.Thread(target=newThread, args=(output, 2, portRanges[2][0], portRanges[2][1], address, proto, timeout, verbose, knownGood))
+    thread4 = threading.Thread(target=newThread, args=(output, 3, portRanges[3][0], portRanges[3][1], address, proto, timeout, verbose, knownGood))
+    thread5 = threading.Thread(target=newThread, args=(output, 4, portRanges[4][0], portRanges[4][1], address, proto, timeout, verbose, knownGood))
+    thread6 = threading.Thread(target=newThread, args=(output, 5, portRanges[5][0], portRanges[5][1], address, proto, timeout, verbose, knownGood))
+    thread7 = threading.Thread(target=newThread, args=(output, 6, portRanges[6][0], portRanges[6][1], address, proto, timeout, verbose, knownGood))
+    thread8 = threading.Thread(target=newThread, args=(output, 7, portRanges[7][0], portRanges[7][1], address, proto, timeout, verbose, knownGood))
     
     thread1.start()
     thread2.start()

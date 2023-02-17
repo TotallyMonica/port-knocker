@@ -191,6 +191,8 @@ def main():
             index = sys.argv.index('-a')
         except ValueError:
             index = sys.argv.index('--address')
+        
+        address = sys.argv[index + 1]
     else:
         print('An address needs to be provided.')
         print(f'Example: {sys.argv[0]} -a 192.168.144.120')

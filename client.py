@@ -4,8 +4,10 @@ import sys
 import os
 import threading
 
+__VERSION__ = '0.1.1'
+
 # Testing method that tests connectivity on each port
-def test(address, port, timeout=60, verbose=False):
+def test_tcp(address, port, timeout=60, verbose=False):
     time.sleep(1)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
@@ -38,6 +40,41 @@ def test(address, port, timeout=60, verbose=False):
         client.close()
         return True
 
+def test_udp(address, port, timeout=60, verbose=False):
+    time.sleep(1)
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+        client.settimeout(timeout)
+        # In a try/except case as the connection has a chance to fail
+        # Accept the received data and send it back to the server to confirm validity.
+        try:
+            if verbose:
+                print(f"Trying to connect to {address}:{port}...")
+            client.connect((address, port))
+        except ConnectionRefusedError:
+            client.close()
+            return False
+        except TimeoutError:
+            client.close()
+            return False
+    
+        # In a try/except case as the connection has a chance to fail
+        # Accept the received data and send it back to the server to confirm validity.
+        try:
+            data = client.recv(2048)
+            client.send(data)
+            data = client.recv(2048)
+            client.send(data)
+        except TimeoutError:
+            client.close()
+            return False
+        
+        if verbose:
+            print(f'Connected to ({address}:{port})')
+
+        client.close()
+        return True
+
 # Looping method to test every port
 # Todo: Don't test known good ports
 def loop(ports, address, timeout=10, verbose=False, knownGood=None):
@@ -53,7 +90,7 @@ def loop(ports, address, timeout=10, verbose=False, knownGood=None):
         checkedPorts = ports
 
     for port in checkedPorts:
-        result = test(address, port, timeout, verbose)
+        result = test_tcp(address, port, timeout, verbose)
 
         # Warn if the port failed and verbosity is true
         if not result and verbose:
@@ -69,7 +106,7 @@ def newThread(output, threadNum, startPort, endPort, address, timeout, verbose, 
 
 # Begin threading, restricted to 8 threads as of right now
 # TODO: Clean this spaghetti code up
-def beginThreading(startPort, endPort, address, timeout, verbose, knownGood):
+def beginThreading(startPort, endPort, address, proto, timeout, verbose, knownGood):
     output = [None, None, None, None, None, None, None, None]
     offset = int( (endPort - startPort) / 8 )
     nextStartingPort = startPort
@@ -85,14 +122,14 @@ def beginThreading(startPort, endPort, address, timeout, verbose, knownGood):
     
     print(portRanges)
 
-    thread1 = threading.Thread(target=newThread, args=(output, 0, portRanges[0][0], portRanges[0][1], address, timeout, verbose, knownGood))
-    thread2 = threading.Thread(target=newThread, args=(output, 1, portRanges[1][0], portRanges[1][1], address, timeout, verbose, knownGood))
-    thread3 = threading.Thread(target=newThread, args=(output, 2, portRanges[2][0], portRanges[2][1], address, timeout, verbose, knownGood))
-    thread4 = threading.Thread(target=newThread, args=(output, 3, portRanges[3][0], portRanges[3][1], address, timeout, verbose, knownGood))
-    thread5 = threading.Thread(target=newThread, args=(output, 4, portRanges[4][0], portRanges[4][1], address, timeout, verbose, knownGood))
-    thread6 = threading.Thread(target=newThread, args=(output, 5, portRanges[5][0], portRanges[5][1], address, timeout, verbose, knownGood))
-    thread7 = threading.Thread(target=newThread, args=(output, 6, portRanges[6][0], portRanges[6][1], address, timeout, verbose, knownGood))
-    thread8 = threading.Thread(target=newThread, args=(output, 7, portRanges[7][0], portRanges[7][1], address, timeout, verbose, knownGood))
+    thread1 = threading.Thread(target=newThread, args=(output, 0, portRanges[0][0], portRanges[0][1], address, proto, timeout, verbose, knownGood))
+    thread2 = threading.Thread(target=newThread, args=(output, 1, portRanges[1][0], portRanges[1][1], address, proto, timeout, verbose, knownGood))
+    thread3 = threading.Thread(target=newThread, args=(output, 2, portRanges[2][0], portRanges[2][1], address, proto, timeout, verbose, knownGood))
+    thread4 = threading.Thread(target=newThread, args=(output, 3, portRanges[3][0], portRanges[3][1], address, proto, timeout, verbose, knownGood))
+    thread5 = threading.Thread(target=newThread, args=(output, 4, portRanges[4][0], portRanges[4][1], address, proto, timeout, verbose, knownGood))
+    thread6 = threading.Thread(target=newThread, args=(output, 5, portRanges[5][0], portRanges[5][1], address, proto, timeout, verbose, knownGood))
+    thread7 = threading.Thread(target=newThread, args=(output, 6, portRanges[6][0], portRanges[6][1], address, proto, timeout, verbose, knownGood))
+    thread8 = threading.Thread(target=newThread, args=(output, 7, portRanges[7][0], portRanges[7][1], address, proto, timeout, verbose, knownGood))
     
     thread1.start()
     thread2.start()
@@ -113,16 +150,47 @@ def beginThreading(startPort, endPort, address, timeout, verbose, knownGood):
     thread8.join()
 
 def main():
+    PROTO_DEFAULT = 'tcp'
     timeout = 30
     knownGood = None
     verbose = True
     startPort = 1
     endPort = 65535
+    proto = PROTO_DEFAULT
+
+    if '-h' in sys.argv or '--help' in sys.argv:
+        print(f"Port knocker v{__VERSION__}")
+        print(f"\nUsage:")
+        print(f"---Required---")
+        print(f"\t-a, --address: specify the address to connect to.")
+        print(f"---Optional---")
+        print(f"\t-p, --protocol: specify the protocol used (Default: TCP)")
+        print(f"\t-t, --timeout: specify the timeout period (default: 10 seconds)")
+        print(f"\t-g, --known-good: specify known good ports, comma delimited")
+        sys.exit(0)
+    
+    if '-p' in sys.argv or '--protocol' in sys.argv:
+        try:
+            index = sys.argv.index('-p')
+        except ValueError:
+            index = sys.argv.index('--protocol')
+        
+        try:
+            proto = sys.argv[index + 1]
+        except IndexError:
+            print(F"No protocol provided, defaulting to {PROTO_DEFAULT}")
+        
+        if proto.lower() == 'tcp' or proto.lower() == 'udp':
+            pass
+        else:
+            print(f"Invalid or unsupported protocol {proto}, defaulting to TCP")
 
     # Address argument
     if '-a' in sys.argv or '--address' in sys.argv:
-        index = sys.argv.index('-a')
-        address = sys.argv[index + 1]
+        try:
+            index = sys.argv.index('-a')
+        except ValueError:
+            index = sys.argv.index('--address')
     else:
         print('An address needs to be provided.')
         print(f'Example: {sys.argv[0]} -a 192.168.144.120')
@@ -130,16 +198,23 @@ def main():
 
     # Timeout argument
     if '-t' in sys.argv or '--timeout' in sys.argv:
-        index = sys.argv.index('-t')
+        try:
+            index = sys.argv.index('-t')
+        except ValueError:
+            index = sys.argv.index('--timeout')
         if sys.argv[index + 1].isdigit():
             timeout = float(sys.argv[index + 1])
         else:
             print(f'Invalid input, ignoring timeout variable and defaulting to {timeout} seconds')
-            print(f'Valid usage: ')
+            print(f'Valid usage: {sys.argv[index]} 30')
 
     # Known good ports argument
     if '-g' in sys.argv or '--known-good' in sys.argv:
-        index = sys.argv.index('-g')
+        try:
+            index = sys.argv.index('-p')
+        except ValueError:
+            index = sys.argv.index('--protocol')
+
         val = sys.argv[index + 1].split(',')
 
         # Validate it is a valid port
@@ -154,12 +229,12 @@ def main():
                 knownGood = val
             else:
                 print(f'Specified port {port} is outside the valid port range (1-65535). Provided port will be ignored.')
-                print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
+                print('Valid usage: {} {Comma separated list of integers between 1 and 65535}', sys.argv[index])
     
     if os.getuid() != 0:
         startPort = 1024
     
-    results = beginThreading(startPort, endPort + 1, address, timeout, verbose, knownGood)
+    results = beginThreading(startPort, endPort + 1, address, proto, timeout, verbose, knownGood)
     print(results)
 
 if __name__ == '__main__':

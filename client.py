@@ -77,7 +77,7 @@ def test_udp(address, port, timeout=60, verbose=False):
 
 # Looping method to test every port
 # Todo: Don't test known good ports
-def loop(ports, address, timeout=10, verbose=False, knownGood=None):
+def loop(ports, address, protocol='tcp', timeout=10, verbose=False, knownGood=None):
     results = []
     checkedPorts = []
 
@@ -89,15 +89,29 @@ def loop(ports, address, timeout=10, verbose=False, knownGood=None):
     else:
         checkedPorts = ports
 
-    for port in checkedPorts:
-        result = test_tcp(address, port, timeout, verbose)
+    if protocol == 'tcp':
+        for port in checkedPorts:
+            result = test_tcp(address, port, timeout, verbose)
 
-        # Warn if the port failed and verbosity is true
-        if not result and verbose:
-            print(f'Warning: Port {port} failed!')
-        
-        results.append([port, result])
+            # Warn if the port failed and verbosity is true
+            if not result and verbose:
+                print(f'Warning: Port {port} failed!')
+            
+            results.append([port, result])
     
+    elif protocol == 'udp':
+        for port in checkedPorts:
+            result = test_udp(address, port, timeout, verbose)
+
+            # Warn if the port failed and verbosity is true
+            if not result and verbose:
+                print(f'Warning: Port {port} failed!')
+            
+            results.append([port, result])
+    
+    else:
+        raise ValueError("Invalid protocol specified")
+
     return results
 
 # The stupid way I have to get the return value because I can't just do it natively

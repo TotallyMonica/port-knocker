@@ -13,7 +13,7 @@ def test_udp(port, interface='0.0.0.0', timeout=60, verbose=False):
     data = f'Test to see if UDP traffic is working'
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as srv:
-        srv.settimeout(timeout)
+        # srv.settimeout(timeout)
 
         try:
             srv.bind((interface, port))
@@ -30,10 +30,10 @@ def test_udp(port, interface='0.0.0.0', timeout=60, verbose=False):
             if verbose:
                 print(f"Connection from {addr}")
             srv.sendto(msg, addr)
-            test, addr = srv.recvfrom(2048).decode('utf-8')
+            test, addr = srv.recvfrom(2048)
 
             # Ensure it matches the expected data
-            if test == data:
+            if test.decode('utf-8') == data:
                 return True
         except TimeoutError:
             return False
@@ -145,31 +145,31 @@ def beginThreading(startPort, endPort, address, proto, timeout, verbose, knownGo
     print(portRanges)
 
     thread1 = threading.Thread(target=newThread, args=(output, 0, portRanges[0][0], portRanges[0][1], address, proto, timeout, verbose, knownGood))
-    # thread2 = threading.Thread(target=newThread, args=(output, 1, portRanges[1][0], portRanges[1][1], address, proto, timeout, verbose, knownGood))
-    # thread3 = threading.Thread(target=newThread, args=(output, 2, portRanges[2][0], portRanges[2][1], address, proto, timeout, verbose, knownGood))
-    # thread4 = threading.Thread(target=newThread, args=(output, 3, portRanges[3][0], portRanges[3][1], address, proto, timeout, verbose, knownGood))
-    # thread5 = threading.Thread(target=newThread, args=(output, 4, portRanges[4][0], portRanges[4][1], address, proto, timeout, verbose, knownGood))
-    # thread6 = threading.Thread(target=newThread, args=(output, 5, portRanges[5][0], portRanges[5][1], address, proto, timeout, verbose, knownGood))
-    # thread7 = threading.Thread(target=newThread, args=(output, 6, portRanges[6][0], portRanges[6][1], address, proto, timeout, verbose, knownGood))
-    # thread8 = threading.Thread(target=newThread, args=(output, 7, portRanges[7][0], portRanges[7][1], address, proto, timeout, verbose, knownGood))
+    thread2 = threading.Thread(target=newThread, args=(output, 1, portRanges[1][0], portRanges[1][1], address, proto, timeout, verbose, knownGood))
+    thread3 = threading.Thread(target=newThread, args=(output, 2, portRanges[2][0], portRanges[2][1], address, proto, timeout, verbose, knownGood))
+    thread4 = threading.Thread(target=newThread, args=(output, 3, portRanges[3][0], portRanges[3][1], address, proto, timeout, verbose, knownGood))
+    thread5 = threading.Thread(target=newThread, args=(output, 4, portRanges[4][0], portRanges[4][1], address, proto, timeout, verbose, knownGood))
+    thread6 = threading.Thread(target=newThread, args=(output, 5, portRanges[5][0], portRanges[5][1], address, proto, timeout, verbose, knownGood))
+    thread7 = threading.Thread(target=newThread, args=(output, 6, portRanges[6][0], portRanges[6][1], address, proto, timeout, verbose, knownGood))
+    thread8 = threading.Thread(target=newThread, args=(output, 7, portRanges[7][0], portRanges[7][1], address, proto, timeout, verbose, knownGood))
     
     thread1.start()
-    # thread2.start()
-    # thread3.start()
-    # thread4.start()
-    # thread5.start()
-    # thread6.start()
-    # thread7.start()
-    # thread8.start()
+    thread2.start()
+    thread3.start()
+    thread4.start()
+    thread5.start()
+    thread6.start()
+    thread7.start()
+    thread8.start()
 
     thread1.join()
-    # thread2.join()
-    # thread3.join()
-    # thread4.join()
-    # thread5.join()
-    # thread6.join()
-    # thread7.join()
-    # thread8.join()
+    thread2.join()
+    thread3.join()
+    thread4.join()
+    thread5.join()
+    thread6.join()
+    thread7.join()
+    thread8.join()
 
     return output
 

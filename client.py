@@ -6,6 +6,8 @@ import threading
 
 __VERSION__ = '0.1.1'
 
+def communicate(good_port, target_port):
+
 # Testing method that tests connectivity on each port
 def test_tcp(address, port, timeout=60, verbose=False):
     time.sleep(1)
@@ -114,51 +116,53 @@ def newThread(output, threadNum, startPort, endPort, proto, address, timeout, ve
 # Begin threading, restricted to 8 threads as of right now
 # TODO: Clean this spaghetti code up
 def beginThreading(startPort, endPort, address, proto, timeout, verbose, knownGood):
-    output = [None, None, None, None, None, None, None, None]
+    output = []
     offset = int( (endPort - startPort) / 8 )
     nextStartingPort = startPort
 
+    output.append(loop(range(startPort, endPort), proto, address, timeout, verbose, knownGood))
+
     # Calculate the port ranges
-    portRanges = []
-    for i in range(8):
-        portRanges.append([
-                nextStartingPort,
-                nextStartingPort + offset
-            ])
-        nextStartingPort += offset
+    # portRanges = []
+    # for i in range(8):
+    #     portRanges.append([
+    #             nextStartingPort,
+    #             nextStartingPort + offset
+    #         ])
+    #     nextStartingPort += offset
     
-    print(portRanges)
+    # print(portRanges)
 
-    thread1 = threading.Thread(target=newThread, args=(output, 0, portRanges[0][0], portRanges[0][1], address, proto, timeout, verbose, knownGood))
-    thread2 = threading.Thread(target=newThread, args=(output, 1, portRanges[1][0], portRanges[1][1], address, proto, timeout, verbose, knownGood))
-    thread3 = threading.Thread(target=newThread, args=(output, 2, portRanges[2][0], portRanges[2][1], address, proto, timeout, verbose, knownGood))
-    thread4 = threading.Thread(target=newThread, args=(output, 3, portRanges[3][0], portRanges[3][1], address, proto, timeout, verbose, knownGood))
-    thread5 = threading.Thread(target=newThread, args=(output, 4, portRanges[4][0], portRanges[4][1], address, proto, timeout, verbose, knownGood))
-    thread6 = threading.Thread(target=newThread, args=(output, 5, portRanges[5][0], portRanges[5][1], address, proto, timeout, verbose, knownGood))
-    thread7 = threading.Thread(target=newThread, args=(output, 6, portRanges[6][0], portRanges[6][1], address, proto, timeout, verbose, knownGood))
-    thread8 = threading.Thread(target=newThread, args=(output, 7, portRanges[7][0], portRanges[7][1], address, proto, timeout, verbose, knownGood))
+    # thread1 = threading.Thread(target=newThread, args=(output, 0, portRanges[0][0], portRanges[0][1], address, proto, timeout, verbose, knownGood))
+    # thread2 = threading.Thread(target=newThread, args=(output, 1, portRanges[1][0], portRanges[1][1], address, proto, timeout, verbose, knownGood))
+    # thread3 = threading.Thread(target=newThread, args=(output, 2, portRanges[2][0], portRanges[2][1], address, proto, timeout, verbose, knownGood))
+    # thread4 = threading.Thread(target=newThread, args=(output, 3, portRanges[3][0], portRanges[3][1], address, proto, timeout, verbose, knownGood))
+    # thread5 = threading.Thread(target=newThread, args=(output, 4, portRanges[4][0], portRanges[4][1], address, proto, timeout, verbose, knownGood))
+    # thread6 = threading.Thread(target=newThread, args=(output, 5, portRanges[5][0], portRanges[5][1], address, proto, timeout, verbose, knownGood))
+    # thread7 = threading.Thread(target=newThread, args=(output, 6, portRanges[6][0], portRanges[6][1], address, proto, timeout, verbose, knownGood))
+    # thread8 = threading.Thread(target=newThread, args=(output, 7, portRanges[7][0], portRanges[7][1], address, proto, timeout, verbose, knownGood))
     
-    thread1.start()
-    thread2.start()
-    thread3.start()
-    thread4.start()
-    thread5.start()
-    thread6.start()
-    thread7.start()
-    thread8.start()
+    # thread1.start()
+    # thread2.start()
+    # thread3.start()
+    # thread4.start()
+    # thread5.start()
+    # thread6.start()
+    # thread7.start()
+    # thread8.start()
 
-    thread1.join()
-    thread2.join()
-    thread3.join()
-    thread4.join()
-    thread5.join()
-    thread6.join()
-    thread7.join()
-    thread8.join()
+    # thread1.join()
+    # thread2.join()
+    # thread3.join()
+    # thread4.join()
+    # thread5.join()
+    # thread6.join()
+    # thread7.join()
+    # thread8.join()
 
 def main():
     PROTO_DEFAULT = 'tcp'
-    timeout = 30
+    timeout = 10
     knownGood = None
     verbose = True
     startPort = 1

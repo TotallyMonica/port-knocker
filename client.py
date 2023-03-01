@@ -175,22 +175,6 @@ def main():
         print(f"\t-t, --timeout: specify the timeout period (default: 10 seconds)")
         print(f"\t-g, --known-good: specify known good ports, comma delimited")
         sys.exit(0)
-    
-    if '-p' in sys.argv or '--protocol' in sys.argv:
-        try:
-            index = sys.argv.index('-p')
-        except ValueError:
-            index = sys.argv.index('--protocol')
-        
-        try:
-            proto = sys.argv[index + 1]
-        except IndexError:
-            print(F"No protocol provided, defaulting to {PROTO_DEFAULT}")
-        
-        if proto.lower() == 'tcp' or proto.lower() == 'udp':
-            pass
-        else:
-            print(f"Invalid or unsupported protocol {proto}, defaulting to TCP")
 
     # Address argument
     if '-a' in sys.argv or '--address' in sys.argv:

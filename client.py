@@ -82,7 +82,7 @@ def loop(ports, address, protocol='tcp', timeout=10, verbose=False, knownGood=No
     else:
         checkedPorts = ports
 
-    if protocol == 'tcp':
+    if protocol.lower() == 'tcp':
         for port in checkedPorts:
             result = test_tcp(address, port, timeout, verbose)
 
@@ -92,7 +92,7 @@ def loop(ports, address, protocol='tcp', timeout=10, verbose=False, knownGood=No
             
             results.append([port, result])
     
-    elif protocol == 'udp':
+    elif protocol.lower() == 'udp':
         for port in checkedPorts:
             result = test_udp(address, port, timeout, verbose)
 

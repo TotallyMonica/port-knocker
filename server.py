@@ -2,6 +2,7 @@
 
 import socket
 from datetime import datetime
+from time import sleep
 import sys
 import os
 import csv
@@ -103,6 +104,10 @@ def communicate(master, verbose, interface='0.0.0.0'):
                     master_conn.send(encode_data(test_info))
                     result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
 
+                    if result == True:
+                        pass
+                    else:
+                        sleep(5)
                     # Take the test results and send them to the client.
                     test_results = {
                         'protocol': server_info['protocol'],

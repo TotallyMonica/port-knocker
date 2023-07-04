@@ -8,7 +8,7 @@ import os
 import csv
 import json
 
-__VERSION__ = '0.1.2a01'
+__VERSION__ = '0.1.2a02'
 
 def encode_data(data):
     to_str = json.dumps(data)
@@ -57,8 +57,40 @@ def test_tcp(port, interface='0.0.0.0', timeout=60, verbose=False):
         
         return "Malformed"
 
+def test_udp(port, interface='0.0.0.0', timeout=60, verbose=False):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as srv:
+        srv.settimeout(timeout)
+        data = f'Test to see if UDP traffic is working'
+
+        try:
+            srv.bind((interface, port))
+        except OSError:
+            return "In use"
+
+        srv.listen()
+        if verbose:
+            print(f"Waiting for a connection on {interface}:{port}...")
+
+        try:
+            conn, addr = srv.accept()
+        except TimeoutError:
+            return False
+
+        if verbose:
+            print(f"Connection from {addr}")
+
+        message_01 = conn.recv(2048).decode('utf-8')
+        conn.send(data.encode('utf-8'))
+        message_02 = conn.recv(2048).decode('utf-8')
+
+        if message_01 == data and message_02 == data:
+            return True
+
+        return "Malformed"
+
+
 # Spin up master thread
-def communicate(master, verbose, interface='0.0.0.0'):
+def communicate(master, verbose, protocol='tcp', interface='0.0.0.0'):
     known_good = []
 
     try:
@@ -86,12 +118,20 @@ def communicate(master, verbose, interface='0.0.0.0'):
         if os.getuid() != 0 and tested_port < 1024:
             raise OSError("Server is not running as root but client requested root only ports")
 
+        # Set socket type to reflect TCP or UDP to be used for checking if the port is available.
+        if protocol.lower() == 'tcp':
+            socket_type = socket.SOCK_STREAM
+        elif protocol.lower() == 'udp':
+            socket_type = socket.SOCK_DGRAM
+        else:
+            raise ValueError("Invalid protocol supplied.")
+
         overall_results = []
         while tested_port <= server_info['end_port']:
             if not tested_port in known_good and not tested_port == master:
                 # Check to see if the port is taken
                 try:
-                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as check_if_port_open:
+                    with socket.socket(socket.AF_INET, socket_type) as check_if_port_open:
                         check_if_port_open.bind(('127.0.0.1', tested_port))
 
                     # Build the test parameters and inform the client.
@@ -102,7 +142,13 @@ def communicate(master, verbose, interface='0.0.0.0'):
                         'continue_testing': True
                     }
                     master_conn.send(encode_data(test_info))
-                    result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
+
+                    if protocol.lower() == 'tcp':
+                        result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
+                    elif protocol.lower() == 'udp':
+                        result = test_udp(tested_port, interface, server_info['timeout'], verbose)
+                    else:
+                        raise ValueError("Invalid protocol supplied.")
 
                     if result == True:
                         pass
@@ -130,7 +176,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
     finally:
         master_socket.close()
         with open(f"results_{str(datetime.now()).replace(' ', '_')[:-7]}.txt", 'w') as results_file:
-            results_file.write(overall_results)
+            results_file.write(json.dumps(overall_results))
 
 # Configure the server to check ports
 def main():

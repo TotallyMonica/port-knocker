@@ -5,7 +5,7 @@ import os
 import json
 from datetime import datetime
 
-__VERSION__ = '0.1.2a01'
+__VERSION__ = '0.1.2a02'
 
 def encode_data(data):
     to_str = json.dumps(data)
@@ -47,6 +47,29 @@ def test_tcp(address, port, timeout=60, verbose=False):
         
         if verbose:
             print(f'Connected to ({address}:{port})')
+
+        client.close()
+        return True
+
+def test_udp(address, port, timeout=60, verbose=False):
+    time.sleep(1)
+
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client:
+        client.settimeout(timeout)
+        data = f'Test to see if UDP traffic is working'
+
+        try:
+            if verbose:
+                print(f"Trying to connect to server at {address}:{port}...")
+            client.sendto(data.encode('utf-8'), (address, port))
+            msg, udp_addr = client.recvfrom(2048)
+            client.sendto(msg, udp_addr)
+        except ConnectionRefusedError:
+            client.close()
+            return False
+        except TimeoutError:
+            client.close()
+            return False
 
         client.close()
         return True
@@ -102,7 +125,7 @@ def communicate(startPort, endPort, address, master, proto, timeout, verbose, kn
     master_socket.close()
 
     with open(f"results_{str(datetime.now()).replace(' ', '_')[:-7]}.txt", 'w') as results_file:
-        results_file.write(overall_results)
+        results_file.write(json.dumps(overall_results))
 
 def main():
     PROTO_DEFAULT = 'tcp'

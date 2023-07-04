@@ -23,5 +23,7 @@ python3 client.py -a address -m master port [-t timeout] [-g [known good ports]]
 ## To-Do
 
 - [ ] Create control panel
-- [ ] Don't scan known good ports
-- [x] ~~Enable communication between the client and the server through a known good port.~~ Being tested now.
+- [ ] Scan UDP ports
+- [ ] IPv6 support
+- [x] ~~Don't scan known good ports~~ [2022-12-07]
+- [x] ~~Enable communication between the client and the server through a known good port.~~ [2023-04-07]

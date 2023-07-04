@@ -14,6 +14,7 @@ def encode_data(data):
 
 def decode_data(data):
     decoded = data.decode("utf-8")
+    print(type(decoded))
     to_dict = json.loads(decoded)
     return to_dict
 

@@ -103,7 +103,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
                 'port': tested_port,
                 'results': result
             }
-            master_socket.send(encode_data(test_results))
+            master_conn.send(encode_data(test_results))
 
             # We're done testing, increment the port
             tested_port += 1
@@ -112,7 +112,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
         test_info = {
             'continue_testing': False
         }
-        master_socket.send(encode_data(test_info))
+        master_conn.send(encode_data(test_info))
     finally:
         master_socket.close()
 

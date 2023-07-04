@@ -4,7 +4,6 @@ import sys
 import os
 import json
 from datetime import datetime
-import multiprocessing
 
 __VERSION__ = '0.1.2a01'
 

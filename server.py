@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 
 import socket
-import threading
 from datetime import datetime
-from time import time
 import sys
 import os
 import csv
 import json
-import ast
 
 __VERSION__ = '0.1.2a01'
 

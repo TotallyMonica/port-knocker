@@ -6,39 +6,10 @@ from time import time
 import sys
 import os
 import csv
+import json
+import ast
 
-__VERSION__ = '0.1.1'
-
-def test_udp(port, interface='0.0.0.0', timeout=60, verbose=False):
-    data = f'Test to see if UDP traffic is working'
-
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as srv:
-        # srv.settimeout(timeout)
-
-        try:
-            srv.bind((interface, port))
-        except OSError:
-            return "In use"
-
-        if verbose:
-            print(f"Waiting for a connection on {interface}:{port}...")
-        
-        try:
-            # If there's a connection, confirm connectivity by sending the received data back.   
-            # This part is the part that emulates TCP  
-            msg, addr = srv.recvfrom(2048)
-            if verbose:
-                print(f"Connection from {addr}")
-            srv.sendto(msg, addr)
-            test, addr = srv.recvfrom(2048)
-
-            # Ensure it matches the expected data
-            if test.decode('utf-8') == data:
-                return True
-        except TimeoutError:
-            return False
-   
-        return "Malformed"
+__VERSION__ = '0.1.2a01'
 
 # Testing method
 def test_tcp(port, interface='0.0.0.0', timeout=60, verbose=False):
@@ -76,102 +47,61 @@ def test_tcp(port, interface='0.0.0.0', timeout=60, verbose=False):
             return True
         
         return "Malformed"
-    
-# Loop tests all the ports, handles the logging
-def loop(ports, interface='0.0.0.0', proto='tcp', timeout=10, verbose=False, knownGood=None):
-    results = []
-    checkedPorts = []
 
-    if knownGood:
-        for port in ports:
-            if port not in knownGood:
-                checkedPorts.append(port)
-    
-    else:
-        checkedPorts = ports
+# Spin up master thread
+def communicate(master, verbose, interface='0.0.0.0'):
+    master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Ensure port isn't taken
+    try:
+        master_socket.bind((interface, master))
+    except OSError:
+        raise OSError("Port in use. Please use a different master port.")
 
-    if proto == 'tcp':
-        for port in checkedPorts:
-            result = test_tcp(port, interface, timeout, verbose)
+    master_socket.listen()
+    if verbose:
+        print(f"Master connection listening on {interface}:{master}...")
 
-            # Warn if the port failed and the  
-            if not result and verbose:
-                print(f'Warning: Port {port} failed!')
-            
-            if result == True:
-                results.append([port, "Pass"])
-            elif result == False:
-                results.append([port, "Fail"])
-            else:
-                results.append([port, result])
-    
-    elif proto == 'udp':
-        for port in checkedPorts:
-            result = test_udp(port, interface, timeout, verbose)
+    master_conn, master_addr = master_socket.accept()
+    if verbose:
+        print(f"Connection from {master_addr}")
 
-            # Warn if the port failed and the  
-            if not result and verbose:
-                print(f'Warning: Port {port} failed!')
-            
-            if result == True:
-                results.append([port, "Pass"])
-            elif result == False:
-                results.append([port, "Fail"])
-            else:
-                results.append([port, result])
-    
-    return results
+    # Receive the test information from the client
+    received = master_conn.recv(2048)
+    server_info = json.loads(received.decode('utf-8'))
 
-# The stupid way I have to get the return value because I can't just do it natively
-def newThread(output, threadNum, startPort, endPort, address, proto, timeout, verbose, knownGood):
-    output[threadNum] = loop(range(startPort, endPort), address, proto, timeout, verbose, knownGood)
+    # Begin test loop
+    tested_port = server_info['start_port']
+    if os.getuid() != 0 and tested_port < 1024:
+        raise OSError("Server is not running as root but client requested root only ports")
 
-# Begin threading, restricted to 8 threads as of right now
-# TODO: Clean this spaghetti code up
-def beginThreading(startPort, endPort, address, proto, timeout, verbose, knownGood):
-    output = []
-    offset = int( (endPort - startPort) / 8 )
-    nextStartingPort = startPort
+    while tested_port <= server_info['end_port']:
+        # Build the test parameters and inform the client.
+        test_info = {
+            'protocol': server_info['protocol'],
+            'timeout': server_info['timeout'],
+            'tested_port': tested_port,
+            'continue_testing': True
+        }
+        master_socket.send(json.dumps(test_info).encode('utf-8'))
+        result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
 
-    # Calculate the port ranges
-    portRanges = []
-    for i in range(8):
-        portRanges.append([
-                nextStartingPort,
-                nextStartingPort + offset
-            ])
-        nextStartingPort += offset
-    
-    print(portRanges)
+        # Take the test results and send them to the client.
+        test_results = {
+            'protocol': server_info['protocol'],
+            'port': tested_port,
+            'results': result
+        }
+        master_socket.send(json.dumps(test_results).encode('utf-8'))
 
-    thread1 = threading.Thread(target=newThread, args=(output, 0, portRanges[0][0], portRanges[0][1], address, proto, timeout, verbose, knownGood))
-    thread2 = threading.Thread(target=newThread, args=(output, 1, portRanges[1][0], portRanges[1][1], address, proto, timeout, verbose, knownGood))
-    thread3 = threading.Thread(target=newThread, args=(output, 2, portRanges[2][0], portRanges[2][1], address, proto, timeout, verbose, knownGood))
-    thread4 = threading.Thread(target=newThread, args=(output, 3, portRanges[3][0], portRanges[3][1], address, proto, timeout, verbose, knownGood))
-    thread5 = threading.Thread(target=newThread, args=(output, 4, portRanges[4][0], portRanges[4][1], address, proto, timeout, verbose, knownGood))
-    thread6 = threading.Thread(target=newThread, args=(output, 5, portRanges[5][0], portRanges[5][1], address, proto, timeout, verbose, knownGood))
-    thread7 = threading.Thread(target=newThread, args=(output, 6, portRanges[6][0], portRanges[6][1], address, proto, timeout, verbose, knownGood))
-    thread8 = threading.Thread(target=newThread, args=(output, 7, portRanges[7][0], portRanges[7][1], address, proto, timeout, verbose, knownGood))
-    
-    thread1.start()
-    thread2.start()
-    thread3.start()
-    thread4.start()
-    thread5.start()
-    thread6.start()
-    thread7.start()
-    thread8.start()
+        # We're done testing, increment the port
+        tested_port += 1
 
-    thread1.join()
-    thread2.join()
-    thread3.join()
-    thread4.join()
-    thread5.join()
-    thread6.join()
-    thread7.join()
-    thread8.join()
-
-    return output
+    # Wrap up testing
+    test_info = {
+        'continue_testing': False
+    }
+    master_socket.send(json.dumps(test_info).encode('utf-8'))
+    master_socket.close()
 
 # Configure the server to check ports
 def main():

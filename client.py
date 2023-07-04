@@ -2,9 +2,10 @@ import socket
 import time
 import sys
 import os
-import threading
+import json
+import multiprocessing
 
-__VERSION__ = '0.1.1'
+__VERSION__ = '0.1.2a01'
 
 # Testing method that tests connectivity on each port
 def test_tcp(address, port, timeout=60, verbose=False):
@@ -40,121 +41,50 @@ def test_tcp(address, port, timeout=60, verbose=False):
         client.close()
         return True
 
-def test_udp(address, port, timeout=60, verbose=False):
-    time.sleep(1)
+# Spin up master thread
+def communicate(startPort, endPort, address, master, proto, timeout, verbose, knownGood):
+    # Check the port used
+    if proto.lower() == 'udp':
+        raise ValueError(f"UDP is currently not supported")
+    elif proto.lower() != 'tcp':
+        raise ValueError(f"Invalid protocol {proto}")
 
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client:
-        client.settimeout(timeout)
-        data = f'Test to see if UDP traffic is working'
-        # In a try/except case as the connection has a chance to fail
-        # Accept the received data and send it back to the server to confirm validity.
-        try:
-            if verbose:
-                print(f"Trying to connect to {address}:{port}...")
-            client.sendto(data.encode('utf-8'), (address, port))
-            if verbose:
-                print(f'Connected to ({address}:{port})')
-            msg, udp_addr = client.recvfrom(2048)
-            client.sendto(msg, udp_addr)
-        except ConnectionRefusedError:
-            client.close()
-            return False
-        except TimeoutError:
-            client.close()
-            return False
-    
-        # In a try/except case as the connection has a chance to fail
-        # Accept the received data and send it back to the server to confirm validity.        
-        client.close()
-        return True
+    # Build the parameters for testing as a whole
+    server_info = {
+        'protocol': proto,
+        'timeout': timeout,
+        'known_good': knownGood,
+        'start_port': startPort,
+        'end_port': endPort
+    }
 
-# Looping method to test every port
-# Todo: Don't test known good ports
-def loop(ports, address, protocol='tcp', timeout=10, verbose=False, knownGood=None):
-    results = []
-    checkedPorts = []
+    # Build the socket
+    master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    master_socket.settimeout(timeout)
+    # In a try/except case as the connection has a chance to fail
+    # Accept the received data and send it back to the server to confirm validity.
+    try:
+        if verbose:
+            print(f"Trying to connect to the master server at {address}:{master}...")
+        master_socket.connect((address, master))
+    except ConnectionRefusedError:
+        master_socket.close()
+        return False
+    except TimeoutError:
+        master_socket.close()
+        return False
 
-    if knownGood:
-        for port in ports:
-            if port not in knownGood:
-                checkedPorts.append(port)
-    
-    else:
-        checkedPorts = ports
+    master_socket.send(json.dumps(server_info).encode('utf-8'))
 
-    if protocol.lower() == 'tcp':
-        for port in checkedPorts:
-            result = test_tcp(address, port, timeout, verbose)
+    continue_testing = True
+    while continue_testing:
+        test_info = json.loads(master_socket.recv(2048))
+        if not test_info['continue']:
+            continue_testing = False
+            break
+        test_tcp(address, test_info['tested_port'], timeout, verbose)
 
-            # Warn if the port failed and verbosity is true
-            if not result and verbose:
-                print(f'Warning: Port {port} failed!')
-            
-            results.append([port, result])
-    
-    elif protocol.lower() == 'udp':
-        for port in checkedPorts:
-            result = test_udp(address, port, timeout, verbose)
-
-            # Warn if the port failed and verbosity is true
-            if not result and verbose:
-                print(f'Warning: Port {port} failed!')
-            
-            results.append([port, result])
-    
-    else:
-        raise ValueError(f"Invalid protocol {protocol}")
-
-    return results
-
-# The stupid way I have to get the return value because I can't just do it natively
-def newThread(output, threadNum, startPort, endPort, proto, address, timeout, verbose, knownGood):
-    output[threadNum] = loop(range(startPort, endPort), proto, address, timeout, verbose, knownGood)
-
-# Begin threading, restricted to 8 threads as of right now
-# TODO: Clean this spaghetti code up
-def beginThreading(startPort, endPort, address, proto, timeout, verbose, knownGood):
-    output = []
-    offset = int( (endPort - startPort) / 8 )
-    nextStartingPort = startPort
-
-    # Calculate the port ranges
-    portRanges = []
-    for i in range(8):
-        portRanges.append([
-                nextStartingPort,
-                nextStartingPort + offset
-            ])
-        nextStartingPort += offset
-    
-    print(portRanges)
-
-    thread1 = threading.Thread(target=newThread, args=(output, 0, portRanges[0][0], portRanges[0][1], address, proto, timeout, verbose, knownGood))
-    thread2 = threading.Thread(target=newThread, args=(output, 1, portRanges[1][0], portRanges[1][1], address, proto, timeout, verbose, knownGood))
-    thread3 = threading.Thread(target=newThread, args=(output, 2, portRanges[2][0], portRanges[2][1], address, proto, timeout, verbose, knownGood))
-    thread4 = threading.Thread(target=newThread, args=(output, 3, portRanges[3][0], portRanges[3][1], address, proto, timeout, verbose, knownGood))
-    thread5 = threading.Thread(target=newThread, args=(output, 4, portRanges[4][0], portRanges[4][1], address, proto, timeout, verbose, knownGood))
-    thread6 = threading.Thread(target=newThread, args=(output, 5, portRanges[5][0], portRanges[5][1], address, proto, timeout, verbose, knownGood))
-    thread7 = threading.Thread(target=newThread, args=(output, 6, portRanges[6][0], portRanges[6][1], address, proto, timeout, verbose, knownGood))
-    thread8 = threading.Thread(target=newThread, args=(output, 7, portRanges[7][0], portRanges[7][1], address, proto, timeout, verbose, knownGood))
-    
-    thread1.start()
-    thread2.start()
-    thread3.start()
-    thread4.start()
-    thread5.start()
-    thread6.start()
-    thread7.start()
-    thread8.start()
-
-    thread1.join()
-    thread2.join()
-    thread3.join()
-    thread4.join()
-    thread5.join()
-    thread6.join()
-    thread7.join()
-    thread8.join()
+    master_socket.close()
 
 def main():
     PROTO_DEFAULT = 'tcp'
@@ -170,6 +100,7 @@ def main():
         print(f"\nUsage:")
         print(f"---Required---")
         print(f"\t-a, --address: specify the address to connect to.")
+        print(f"\t-m, --master-port: specify a master port")
         print(f"---Optional---")
         print(f"\t-p, --protocol: specify the protocol used (Default: TCP)")
         print(f"\t-t, --timeout: specify the timeout period (default: 10 seconds)")
@@ -187,6 +118,18 @@ def main():
     else:
         print('An address needs to be provided.')
         print(f'Example: {sys.argv[0]} -a 192.168.144.120')
+        sys.exit()
+
+    if '-m' in sys.argv or '--master-port' in sys.argv:
+        try:
+            index = sys.argv.index('-m')
+        except ValueError:
+            index = sys.argv.index('--master-port')
+
+        master = sys.argv[index + 1]
+    else:
+        print('A master port needs to be provided.')
+        print(f'Example: {sys.argv[0]} -m 19315')
         sys.exit()
 
     # Timeout argument
@@ -212,14 +155,14 @@ def main():
 
         # Validate it is a valid port
         for port in val:
-            if val.isdigit():
-                val = int(val)
+            if port.isdigit():
+                port = int(port)
             else:
                 print(f'Specified port {port} is invalid, ignoring the value.')
                 print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
             
-            if val < 65536 and val > 0:
-                knownGood = val
+            if port < 65536 and port > 0:
+                knownGood = port
             else:
                 print(f'Specified port {port} is outside the valid port range (1-65535). Provided port will be ignored.')
                 print('Valid usage: {} {Comma separated list of integers between 1 and 65535}', sys.argv[index])
@@ -227,7 +170,7 @@ def main():
     if os.getuid() != 0:
         startPort = 1024
     
-    results = beginThreading(startPort, endPort + 1, address, proto, timeout, verbose, knownGood)
+    results = communicate(startPort, endPort + 1, address, master, proto, timeout, verbose, knownGood)
     print(results)
 
 if __name__ == '__main__':

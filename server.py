@@ -11,6 +11,14 @@ import ast
 
 __VERSION__ = '0.1.2a01'
 
+def encode_data(data):
+    to_str = json.dumps(data)
+    encoded = to_str.encode("utf-8")
+
+def decode_data(data):
+    decoded = data.decode("utf-8")
+    to_dict = json.loads(decoded)
+
 # Testing method
 def test_tcp(port, interface='0.0.0.0', timeout=60, verbose=False):
     # Create the test string to be used to confirm connectivity

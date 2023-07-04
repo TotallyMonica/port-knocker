@@ -14,10 +14,12 @@ __VERSION__ = '0.1.2a01'
 def encode_data(data):
     to_str = json.dumps(data)
     encoded = to_str.encode("utf-8")
+    return encoded
 
 def decode_data(data):
     decoded = data.decode("utf-8")
     to_dict = json.loads(decoded)
+    return to_dict
 
 # Testing method
 def test_tcp(port, interface='0.0.0.0', timeout=60, verbose=False):
@@ -76,7 +78,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
 
         # Receive the test information from the client
         received = master_conn.recv(2048)
-        server_info = json.loads(received.decode('utf-8'))
+        server_info = decode_data(received)
 
         # Begin test loop
         tested_port = server_info['start_port']
@@ -91,7 +93,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
                 'tested_port': tested_port,
                 'continue_testing': True
             }
-            master_socket.send(json.dumps(test_info).encode('utf-8'))
+            master_socket.send(encode_data(test_info))
             result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
 
             # Take the test results and send them to the client.
@@ -100,7 +102,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
                 'port': tested_port,
                 'results': result
             }
-            master_socket.send(json.dumps(test_results).encode('utf-8'))
+            master_socket.send(encode_data(test_results))
 
             # We're done testing, increment the port
             tested_port += 1
@@ -109,7 +111,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
         test_info = {
             'continue_testing': False
         }
-        master_socket.send(json.dumps(test_info).encode('utf-8'))
+        master_socket.send(encode_data(test_info))
     finally:
         master_socket.close()
 

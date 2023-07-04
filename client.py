@@ -10,10 +10,12 @@ __VERSION__ = '0.1.2a01'
 def encode_data(data):
     to_str = json.dumps(data)
     encoded = to_str.encode("utf-8")
+    return encoded
 
 def decode_data(data):
     decoded = data.decode("utf-8")
     to_dict = json.loads(decoded)
+    return to_dict
 
 # Testing method that tests connectivity on each port
 def test_tcp(address, port, timeout=60, verbose=False):
@@ -82,11 +84,11 @@ def communicate(startPort, endPort, address, master, proto, timeout, verbose, kn
         master_socket.close()
         return False
 
-    master_socket.send(json.dumps(server_info).encode('utf-8'))
+    master_socket.send(encode_data(server_info))
 
     continue_testing = True
     while continue_testing:
-        test_info = json.loads(master_socket.recv(2048))
+        test_info = decode_data(master_socket.recv(2048))
         if not test_info['continue']:
             continue_testing = False
             break

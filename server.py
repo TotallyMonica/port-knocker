@@ -50,58 +50,60 @@ def test_tcp(port, interface='0.0.0.0', timeout=60, verbose=False):
 
 # Spin up master thread
 def communicate(master, verbose, interface='0.0.0.0'):
-    master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # Ensure port isn't taken
     try:
-        master_socket.bind((interface, master))
-    except OSError:
-        raise OSError("Port in use. Please use a different master port.")
+        master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Ensure port isn't taken
+        try:
+            master_socket.bind((interface, master))
+        except OSError:
+            raise OSError("Port in use. Please use a different master port.")
 
-    master_socket.listen()
-    if verbose:
-        print(f"Master connection listening on {interface}:{master}...")
+        master_socket.listen()
+        if verbose:
+            print(f"Master connection listening on {interface}:{master}...")
 
-    master_conn, master_addr = master_socket.accept()
-    if verbose:
-        print(f"Connection from {master_addr}")
+        master_conn, master_addr = master_socket.accept()
+        if verbose:
+            print(f"Connection from {master_addr}")
 
-    # Receive the test information from the client
-    received = master_conn.recv(2048)
-    server_info = json.loads(received.decode('utf-8'))
+        # Receive the test information from the client
+        received = master_conn.recv(2048)
+        server_info = json.loads(received.decode('utf-8'))
 
-    # Begin test loop
-    tested_port = server_info['start_port']
-    if os.getuid() != 0 and tested_port < 1024:
-        raise OSError("Server is not running as root but client requested root only ports")
+        # Begin test loop
+        tested_port = server_info['start_port']
+        if os.getuid() != 0 and tested_port < 1024:
+            raise OSError("Server is not running as root but client requested root only ports")
 
-    while tested_port <= server_info['end_port']:
-        # Build the test parameters and inform the client.
+        while tested_port <= server_info['end_port']:
+            # Build the test parameters and inform the client.
+            test_info = {
+                'protocol': server_info['protocol'],
+                'timeout': server_info['timeout'],
+                'tested_port': tested_port,
+                'continue_testing': True
+            }
+            master_socket.send(json.dumps(test_info).encode('utf-8'))
+            result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
+
+            # Take the test results and send them to the client.
+            test_results = {
+                'protocol': server_info['protocol'],
+                'port': tested_port,
+                'results': result
+            }
+            master_socket.send(json.dumps(test_results).encode('utf-8'))
+
+            # We're done testing, increment the port
+            tested_port += 1
+
+        # Wrap up testing
         test_info = {
-            'protocol': server_info['protocol'],
-            'timeout': server_info['timeout'],
-            'tested_port': tested_port,
-            'continue_testing': True
+            'continue_testing': False
         }
         master_socket.send(json.dumps(test_info).encode('utf-8'))
-        result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
-
-        # Take the test results and send them to the client.
-        test_results = {
-            'protocol': server_info['protocol'],
-            'port': tested_port,
-            'results': result
-        }
-        master_socket.send(json.dumps(test_results).encode('utf-8'))
-
-        # We're done testing, increment the port
-        tested_port += 1
-
-    # Wrap up testing
-    test_info = {
-        'continue_testing': False
-    }
-    master_socket.send(json.dumps(test_info).encode('utf-8'))
-    master_socket.close()
+    finally:
+        master_socket.close()
 
 # Configure the server to check ports
 def main():

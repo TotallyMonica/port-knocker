@@ -2,6 +2,7 @@
 
 import socket
 import threading
+from datetime import datetime
 from time import time
 import sys
 import os
@@ -86,6 +87,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
         if os.getuid() != 0 and tested_port < 1024:
             raise OSError("Server is not running as root but client requested root only ports")
 
+        overall_results = []
         while tested_port <= server_info['end_port']:
             # Build the test parameters and inform the client.
             test_info = {
@@ -104,6 +106,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
                 'results': result
             }
             master_conn.send(encode_data(test_results))
+            overall_results.append(test_results)
 
             # We're done testing, increment the port
             tested_port += 1
@@ -115,6 +118,8 @@ def communicate(master, verbose, interface='0.0.0.0'):
         master_conn.send(encode_data(test_info))
     finally:
         master_socket.close()
+        with open(f"results_{str(datetime.now()).replace(' ', '_')[:-7]}.txt", 'w') as results_file:
+            results_file.write(overall_results)
 
 # Configure the server to check ports
 def main():

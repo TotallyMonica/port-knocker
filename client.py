@@ -3,6 +3,7 @@ import time
 import sys
 import os
 import json
+from datetime import datetime
 import multiprocessing
 
 __VERSION__ = '0.1.2a01'
@@ -102,6 +103,9 @@ def communicate(startPort, endPort, address, master, proto, timeout, verbose, kn
         overall_results.append(test_result)
 
     master_socket.close()
+
+    with open(f"results_{str(datetime.now()).replace(' ', '_')[:-7]}.txt", 'w') as results_file:
+        results_file.write(overall_results)
 
 def main():
     PROTO_DEFAULT = 'tcp'

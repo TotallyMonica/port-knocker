@@ -123,6 +123,18 @@ def main():
         print(f"\t-g, --known-good: specify known good ports, comma delimited")
         sys.exit(0)
 
+    if '-m' in sys.argv or '--master-port' in sys.argv:
+        try:
+            index = sys.argv.index('-m')
+        except ValueError:
+            index = sys.argv.index('--master-port')
+
+        master = sys.argv[index + 1]
+    else:
+        print('A master port needs to be provided.')
+        print(f'Example: {sys.argv[0]} -m 19315')
+        sys.exit()
+
     if '-p' in sys.argv or '--protocol' in sys.argv:
         try:
             index = sys.argv.index('-p')
@@ -186,7 +198,7 @@ def main():
     if os.getuid() != 0:
         startPort = 1024
     
-    results = communicate(startPort, endPort + 1, interface, proto, timeout, verbose, knownGood)
+    results = communicate(master, verbose, interface)
     print(results)
 
     with open(f'results-{proto}.csv', 'w') as filp:

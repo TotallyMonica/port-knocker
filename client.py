@@ -173,6 +173,7 @@ def main():
 
         val = sys.argv[index + 1].split(',')
 
+        knownGood = []
         # Validate it is a valid port
         for port in val:
             if port.isdigit():
@@ -181,12 +182,12 @@ def main():
                 print(f'Specified port {port} is invalid, ignoring the value.')
                 print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
             
-            if port < 65536 and port > 0:
-                knownGood = port
+            if 65536 > port > 0:
+                knownGood.append(port)
             else:
                 print(f'Specified port {port} is outside the valid port range (1-65535). Provided port will be ignored.')
                 print('Valid usage: {} {Comma separated list of integers between 1 and 65535}', sys.argv[index])
-    
+
     if os.getuid() != 0:
         startPort = 1024
     

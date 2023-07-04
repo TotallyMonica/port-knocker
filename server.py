@@ -59,6 +59,8 @@ def test_tcp(port, interface='0.0.0.0', timeout=60, verbose=False):
 
 # Spin up master thread
 def communicate(master, verbose, interface='0.0.0.0'):
+    known_good = []
+
     try:
         master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Ensure port isn't taken
@@ -86,24 +88,25 @@ def communicate(master, verbose, interface='0.0.0.0'):
 
         overall_results = []
         while tested_port <= server_info['end_port']:
-            # Build the test parameters and inform the client.
-            test_info = {
-                'protocol': server_info['protocol'],
-                'timeout': server_info['timeout'],
-                'tested_port': tested_port,
-                'continue_testing': True
-            }
-            master_conn.send(encode_data(test_info))
-            result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
+            if not tested_port in known_good and not tested_port == master:
+                # Build the test parameters and inform the client.
+                test_info = {
+                    'protocol': server_info['protocol'],
+                    'timeout': server_info['timeout'],
+                    'tested_port': tested_port,
+                    'continue_testing': True
+                }
+                master_conn.send(encode_data(test_info))
+                result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
 
-            # Take the test results and send them to the client.
-            test_results = {
-                'protocol': server_info['protocol'],
-                'port': tested_port,
-                'results': result
-            }
-            master_conn.send(encode_data(test_results))
-            overall_results.append(test_results)
+                # Take the test results and send them to the client.
+                test_results = {
+                    'protocol': server_info['protocol'],
+                    'port': tested_port,
+                    'results': result
+                }
+                master_conn.send(encode_data(test_results))
+                overall_results.append(test_results)
 
             # We're done testing, increment the port
             tested_port += 1

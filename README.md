@@ -11,17 +11,17 @@ The client needs to be "behind the firewall" and the server "outside the firewal
 Server:
 
 ```bash
-python3 server.py [-g interface] [-t timeout] [-g [known good ports]]
+python3 server.py -m master port [-g interface] [-t timeout] [-g [known good ports]]
 ```
 
 Client:
 
 ```bash
-python3 client.py -a address [-t timeout] [-g [known good ports]]
+python3 client.py -a address -m master port [-t timeout] [-g [known good ports]]
 ```
 
 ## To-Do
 
 - [ ] Create control panel
-- [X] ~~*Don't scan known good ports*~~ [2022-12-07]
-- [ ] Enable communication between the client and the server through a known good port.
+- [ ] Don't scan known good ports
+- [x] ~~Enable communication between the client and the server through a known good port.~~ Being tested now.

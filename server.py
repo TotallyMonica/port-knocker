@@ -269,7 +269,7 @@ def main():
     if os.getuid() != 0:
         startPort = 1024
     
-    results = communicate(master, verbose, interface)
+    results = communicate(master, verbose=verbose, interface=interface)
     print(results)
 
     with open(f'results-{proto}.csv', 'w') as filp:

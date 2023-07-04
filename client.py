@@ -92,7 +92,7 @@ def communicate(startPort, endPort, address, master, proto, timeout, verbose, kn
     while continue_testing:
         test_info = decode_data(master_socket.recv(2048))
         print(test_info)
-        if not test_info['continue']:
+        if not test_info['continue_testing']:
             continue_testing = False
             break
         test_tcp(address, test_info['tested_port'], timeout, verbose)

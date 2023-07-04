@@ -131,11 +131,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
 def main():
     PROTO_DEFAULT = 'tcp'
     interface = '0.0.0.0'
-    timeout = 10
-    knownGood = None
     verbose = True
-    startPort = 1
-    endPort = 65535
     proto = PROTO_DEFAULT
 
     if '-h' in sys.argv or '--help' in sys.argv:

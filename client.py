@@ -112,6 +112,7 @@ def main():
     startPort = 1
     endPort = 65535
     proto = PROTO_DEFAULT
+    predefined_port = False
 
     if '-h' in sys.argv or '--help' in sys.argv:
         print(f"Port knocker v{__VERSION__}")
@@ -123,8 +124,12 @@ def main():
         print(f"\t-p, --protocol: specify the protocol used (Default: TCP)")
         print(f"\t-t, --timeout: specify the timeout period (default: 10 seconds)")
         print(f"\t-g, --known-good: specify known good ports, comma delimited")
+        print(f"\t-s, --start-port: specify the port to start from (Default: 1 if privileged, 1024 if unprivileged)")
         sys.exit(0)
 
+    #
+    # --Required arguments--
+    #
     # Address argument
     if '-a' in sys.argv or '--address' in sys.argv:
         try:
@@ -138,6 +143,7 @@ def main():
         print(f'Example: {sys.argv[0]} -a 192.168.144.120')
         sys.exit()
 
+    # Master port argument
     if '-m' in sys.argv or '--master-port' in sys.argv:
         try:
             index = sys.argv.index('-m')
@@ -150,6 +156,9 @@ def main():
         print(f'Example: {sys.argv[0]} -m 19315')
         sys.exit()
 
+    #
+    # --Required arguments--
+    #
     # Timeout argument
     if '-t' in sys.argv or '--timeout' in sys.argv:
         try:
@@ -186,7 +195,32 @@ def main():
                 print(f'Specified port {port} is outside the valid port range (1-65535). Provided port will be ignored.')
                 print('Valid usage: {} {Comma separated list of integers between 1 and 65535}', sys.argv[index])
 
-    if os.getuid() != 0:
+    # Start port
+    if '-s' in sys.argv or '--start-port' in sys.argv:
+        try:
+            index = sys.argv.index('-s')
+        except ValueError:
+            index = sys.argv.index('--start-port')
+
+        val = sys.argv[index + 1]
+
+        # Validate it is a valid port
+        if port.isdigit():
+            start_port = int(port)
+        else:
+            print(f'Specified port {port} is invalid, ignoring the value.')
+            print('Valid usage: -s {Start port}')
+
+        if not 65536 > port > 0:
+            print(
+                f'Specified port {port} is outside the valid port range (1-65535). Provided port will be ignored.')
+            print('Valid usage: {} {Comma separated list of integers between 1 and 65535}', sys.argv[index])
+        elif os.getuid() !=0 and port < 1024:
+            print(f"Requested start port {port} requires root, defaulting to 1024.")
+        else:
+            predefined_port = True
+
+    if os.getuid() != 0 and not predefined_port:
         startPort = 1024
     
     results = communicate(startPort, endPort + 1, address, master, proto, timeout, verbose, knownGood)

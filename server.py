@@ -78,8 +78,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
             print(f"Connection from {master_addr}")
 
         # Receive the test information from the client
-        received = master_conn.recv(2048)
-        server_info = decode_data(received)
+        server_info = decode_data(master_conn.recv(2048))
         print(server_info)
 
         # Begin test loop

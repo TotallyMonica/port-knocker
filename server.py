@@ -186,7 +186,7 @@ def main():
     if os.getuid() != 0:
         startPort = 1024
     
-    results = beginThreading(startPort, endPort + 1, interface, proto, timeout, verbose, knownGood)
+    results = communicate(startPort, endPort + 1, interface, proto, timeout, verbose, knownGood)
     print(results)
 
     with open(f'results-{proto}.csv', 'w') as filp:

@@ -80,6 +80,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
         # Receive the test information from the client
         received = master_conn.recv(2048)
         server_info = decode_data(received)
+        print(server_info)
 
         # Begin test loop
         tested_port = server_info['start_port']
@@ -94,7 +95,7 @@ def communicate(master, verbose, interface='0.0.0.0'):
                 'tested_port': tested_port,
                 'continue_testing': True
             }
-            master_socket.send(encode_data(test_info))
+            master_conn.send(encode_data(test_info))
             result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
 
             # Take the test results and send them to the client.

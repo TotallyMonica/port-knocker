@@ -15,6 +15,7 @@ def encode_data(data):
 def decode_data(data):
     decoded = data.decode("utf-8")
     print(type(decoded))
+    print(decoded)
     to_dict = json.loads(decoded)
     return to_dict
 
@@ -90,6 +91,7 @@ def communicate(startPort, endPort, address, master, proto, timeout, verbose, kn
     continue_testing = True
     while continue_testing:
         test_info = decode_data(master_socket.recv(2048))
+        print(test_info)
         if not test_info['continue']:
             continue_testing = False
             break

@@ -16,7 +16,6 @@ def encode_data(data):
 
 def decode_data(data):
     decoded = data.decode("utf-8")
-    print(type(decoded))
     to_dict = json.loads(decoded)
     return to_dict
 
@@ -89,24 +88,31 @@ def communicate(master, verbose, interface='0.0.0.0'):
         overall_results = []
         while tested_port <= server_info['end_port']:
             if not tested_port in known_good and not tested_port == master:
-                # Build the test parameters and inform the client.
-                test_info = {
-                    'protocol': server_info['protocol'],
-                    'timeout': server_info['timeout'],
-                    'tested_port': tested_port,
-                    'continue_testing': True
-                }
-                master_conn.send(encode_data(test_info))
-                result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
+                # Check to see if the port is taken
+                try:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as check_if_port_open:
+                        check_if_port_open.bind(('127.0.0.1', tested_port))
 
-                # Take the test results and send them to the client.
-                test_results = {
-                    'protocol': server_info['protocol'],
-                    'port': tested_port,
-                    'results': result
-                }
-                master_conn.send(encode_data(test_results))
-                overall_results.append(test_results)
+                    # Build the test parameters and inform the client.
+                    test_info = {
+                        'protocol': server_info['protocol'],
+                        'timeout': server_info['timeout'],
+                        'tested_port': tested_port,
+                        'continue_testing': True
+                    }
+                    master_conn.send(encode_data(test_info))
+                    result = test_tcp(tested_port, interface, server_info['timeout'], verbose)
+
+                    # Take the test results and send them to the client.
+                    test_results = {
+                        'protocol': server_info['protocol'],
+                        'port': tested_port,
+                        'results': result
+                    }
+                    master_conn.send(encode_data(test_results))
+                    overall_results.append(test_results)
+                except OSError:
+                    pass
 
             # We're done testing, increment the port
             tested_port += 1

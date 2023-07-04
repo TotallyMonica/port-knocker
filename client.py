@@ -107,9 +107,9 @@ def communicate(startPort, endPort, address, master, proto, timeout, verbose, kn
 def main():
     PROTO_DEFAULT = 'tcp'
     timeout = 10
-    knownGood = None
+    known_good = None
     verbose = True
-    startPort = 1
+    start_port = 1
     endPort = 65535
     proto = PROTO_DEFAULT
     predefined_port = False
@@ -180,7 +180,7 @@ def main():
 
         val = sys.argv[index + 1].split(',')
 
-        knownGood = []
+        known_good = []
         # Validate it is a valid port
         for port in val:
             if port.isdigit():
@@ -190,7 +190,7 @@ def main():
                 print('Valid usage: -g {Comma separated list of integers between 1 and 65535}')
             
             if 65536 > port > 0:
-                knownGood.append(port)
+                known_good.append(port)
             else:
                 print(f'Specified port {port} is outside the valid port range (1-65535). Provided port will be ignored.')
                 print('Valid usage: {} {Comma separated list of integers between 1 and 65535}', sys.argv[index])
@@ -205,7 +205,7 @@ def main():
         val = sys.argv[index + 1]
 
         # Validate it is a valid port
-        if port.isdigit():
+        if val.isdigit():
             start_port = int(port)
         else:
             print(f'Specified port {port} is invalid, ignoring the value.')
@@ -221,9 +221,9 @@ def main():
             predefined_port = True
 
     if os.getuid() != 0 and not predefined_port:
-        startPort = 1024
+        start_port = 1024
     
-    results = communicate(startPort, endPort + 1, address, master, proto, timeout, verbose, knownGood)
+    results = communicate(start_port, endPort + 1, address, master, proto, timeout, verbose, known_good)
     print(results)
 
 if __name__ == '__main__':

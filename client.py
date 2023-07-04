@@ -88,6 +88,7 @@ def communicate(startPort, endPort, address, master, proto, timeout, verbose, kn
 
     master_socket.send(encode_data(server_info))
 
+    overall_results = []
     continue_testing = True
     while continue_testing:
         test_info = decode_data(master_socket.recv(2048))
@@ -96,6 +97,9 @@ def communicate(startPort, endPort, address, master, proto, timeout, verbose, kn
             continue_testing = False
             break
         test_tcp(address, test_info['tested_port'], timeout, verbose)
+        test_result = decode_data(master_socket.recv(2048))
+        print(test_result)
+        overall_results.append(test_result)
 
     master_socket.close()
 

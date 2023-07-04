@@ -126,7 +126,7 @@ def main():
         except ValueError:
             index = sys.argv.index('--master-port')
 
-        master = sys.argv[index + 1]
+        master = int(sys.argv[index + 1])
     else:
         print('A master port needs to be provided.')
         print(f'Example: {sys.argv[0]} -m 19315')

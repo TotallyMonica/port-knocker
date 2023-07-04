@@ -14,8 +14,6 @@ def encode_data(data):
 
 def decode_data(data):
     decoded = data.decode("utf-8")
-    print(type(decoded))
-    print(decoded)
     to_dict = json.loads(decoded)
     return to_dict
 
@@ -167,9 +165,9 @@ def main():
     # Known good ports argument
     if '-g' in sys.argv or '--known-good' in sys.argv:
         try:
-            index = sys.argv.index('-p')
+            index = sys.argv.index('-g')
         except ValueError:
-            index = sys.argv.index('--protocol')
+            index = sys.argv.index('--known-good')
 
         val = sys.argv[index + 1].split(',')
 
